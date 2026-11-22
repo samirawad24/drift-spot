@@ -234,11 +234,12 @@ addLightPoles();
 
 // Driver stands. You watch from the top of one.
 const SPOTS = [
+  { name: 'CHASE CAM', chase: true },
   { name: 'MAIN STAND', x: 0, y: 9, z: WALL.z + 5 },
   { name: 'EAST TOWER', x: WALL.x + 5, y: 11, z: 4 },
   { name: 'BACK HILL', x: -38, y: 13, z: -WALL.z - 6 },
 ];
-const standModels = SPOTS.map((s) => {
+const standModels = SPOTS.filter((s) => !s.chase).map((s) => {
   const g = new THREE.Group();
   const top = s.y - 1.7;
   const leg = new THREE.BoxGeometry(0.3, top, 0.3);
@@ -275,6 +276,7 @@ function resetCar() {
   const p = startPose();
   Object.assign(car, { x: p.x, z: p.z, h: p.h, vx: 0, vz: 0, yaw: 0, steer: 0 });
   skidPrev = null;
+  chaseSnap = true;
 }
 
 // ---------- Smoke ----------
@@ -321,9 +323,10 @@ function updateSmoke(dt) {
     p.s.position.y += p.vy * dt;
     p.s.position.z += p.vz * dt;
     p.vx *= 0.98; p.vz *= 0.98;
-    const sz = p.size * (1 + k * 3.2);
+    const sz = p.size * (1 + k * 2.6);
     p.s.scale.set(sz, sz, 1);
-    p.s.material.opacity = 0.75 * (1 - k);
+    const near = Math.min(1, Math.max(0, (p.s.position.distanceTo(camera.position) - 3) / 7));
+    p.s.material.opacity = 0.7 * (1 - k) * near;
   }
 }
 
@@ -392,12 +395,39 @@ const look = new THREE.Vector3(car.x, 0, car.z);
 let fov = 40;
 function setSpot(i) {
   spotIndex = (i + SPOTS.length) % SPOTS.length;
-  standModels.forEach((m, k) => { m.visible = k !== spotIndex; });
+  standModels.forEach((m, k) => { m.visible = k !== spotIndex - 1; });
   const s = SPOTS[spotIndex];
-  camera.position.set(s.x, s.y, s.z);
+  if (!s.chase) camera.position.set(s.x, s.y, s.z);
+  chaseSnap = true;
   toast(s.name);
 }
+
+// Third person: sits behind the direction of travel, so a drifting car
+// shows its side to the camera.
+let chaseSnap = true;
+let chaseDir = 0;
+function updateChase(dt) {
+  const travel = car.speed > 3 && car.forward > 0 ? Math.atan2(car.vz, car.vx) : car.h;
+  if (chaseSnap) chaseDir = travel;
+  let diff = travel - chaseDir;
+  diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+  chaseDir += diff * (chaseSnap ? 1 : 1 - Math.exp(-dt * 3.5));
+  const dist = 8 + Math.min(4, car.speed * 0.08);
+  const tx = car.x - Math.cos(chaseDir) * dist;
+  const tz = car.z - Math.sin(chaseDir) * dist;
+  const k = chaseSnap ? 1 : 1 - Math.exp(-dt * 8);
+  camera.position.x += (tx - camera.position.x) * k;
+  camera.position.z += (tz - camera.position.z) * k;
+  camera.position.y += (3.4 - camera.position.y) * k;
+  look.set(car.x + Math.cos(chaseDir) * 3, 1, car.z + Math.sin(chaseDir) * 3);
+  fov += (58 + Math.min(10, car.speed * 0.25) - fov) * (chaseSnap ? 1 : 1 - Math.exp(-dt * 3));
+  camera.fov = fov;
+  camera.updateProjectionMatrix();
+  camera.lookAt(look);
+  chaseSnap = false;
+}
 function updateCamera(dt, snap) {
+  if (SPOTS[spotIndex].chase) { updateChase(dt); return; }
   const leadX = car.x + car.vx * 0.25, leadZ = car.z + car.vz * 0.25;
   const k = snap ? 1 : 1 - Math.exp(-dt * 6);
   look.x += (leadX - look.x) * k;
