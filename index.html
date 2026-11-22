@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1b1f4a">
+<title>Drift Spot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+</script>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="hud" hidden>
+  <div id="speed"><span id="speed-num">000</span><small>KM/H</small></div>
+  <div id="angle"><small>ANGLE</small><span id="angle-num">00</span></div>
+  <div id="top-right">
+    <span id="input-tag">KEYS</span>
+    <button id="spot-btn" type="button">SPOT</button>
+    <button id="pause-btn" type="button">II</button>
+  </div>
+</div>
+
+<div id="touch" hidden>
+  <div id="steer-zone"></div>
+  <div id="steer-base"><div id="steer-knob"></div></div>
+  <div id="pedals">
+    <button id="btn-hand" type="button">E-BRAKE</button>
+    <button id="btn-brake" type="button">BRAKE</button>
+    <button id="btn-gas" type="button">GAS</button>
+  </div>
+</div>
+
+<div id="title" class="screen">
+  <div class="panel">
+    <h1>DRIFT<br>SPOT</h1>
+    <p class="sub">Stand at the edge. Drive it sideways.</p>
+    <p id="start-hint" class="blink">PRESS START</p>
+    <div class="controls">
+      <div><b>KEYS</b>WASD or arrows, SPACE e-brake, C spot, R reset</div>
+      <div><b>PAD</b>Stick steer, RT gas, LT brake, A e-brake, Y spot</div>
+      <div><b>TOUCH</b>Drag left side to steer, buttons on the right</div>
+    </div>
+    <p id="pad-status">Controller: press any button to connect</p>
+  </div>
+</div>
+
+<div id="pause" class="screen" hidden>
+  <div class="panel">
+    <h2>PAUSED</h2>
+    <div class="menu">
+      <button type="button" data-act="resume">RESUME</button>
+      <button type="button" data-act="reset">RESET CAR</button>
+      <button type="button" data-act="spot">CHANGE SPOT</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" hidden></div>
+
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
